@@ -3,7 +3,7 @@
 An interactive **Streamlit** web app for exploring water quality data collected by an autonomous
 vehicle in northern Biscayne Bay, Miami, FL.
 
-- **Live app:** _add your Streamlit Community Cloud URL here_
+- **Live app:** https://biscayne-bay-water-quality-andres-zubizarreta.streamlit.app/
 - **Repository:** https://github.com/andreszubi/biscayne-bay-water-quality
 - **Author:** Andres Zubizarreta
 
