@@ -44,7 +44,7 @@ def column_data(df: pd.DataFrame, parameter: str, dark: bool = False) -> pd.Data
             "lon": df["Longitude"],
             "lat": df["Latitude"],
             "height": MIN_HEIGHT_M + t * (MAX_HEIGHT_M - MIN_HEIGHT_M),
-            "color": [[int(c) for c in unlabel_rgb(rgb)] + [235] for rgb in colours],
+            "color": [[int(c) for c in unlabel_rgb(rgb)] + [255] for rgb in colours],
             # Pre-formatted strings for the hover tooltip.
             "time": df["Timestamp"].dt.strftime("%H:%M:%S"),
             "value": df[parameter].map(lambda v: f"{v:,.2f}"),
@@ -81,6 +81,9 @@ def track_3d_map(df: pd.DataFrame, parameter: str, dark: bool = False) -> pdk.De
             radius=COLUMN_RADIUS_M,
             get_fill_color="color",
             extruded=True,
+            # More ambient light than deck.gl's default, so the sides of the
+            # columns show their true colour instead of a darkened one.
+            material={"ambient": 0.7, "diffuse": 0.4, "shininess": 16, "specularColor": [40, 40, 40]},
             pickable=True,
             auto_highlight=True,
         ),

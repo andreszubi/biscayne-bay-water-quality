@@ -180,7 +180,7 @@ the rest of the app.
 
 | Story | Tasks |
 |---|---|
-| US-23 | `src/map3d.py`: pydeck ColumnLayer on a tilted Carto basemap, column height and colour both encode the chosen parameter, Start/End text labels, hover tooltip, text legend; alt text, summary and data table; keyboard instructions; colour scales limited to the Viridis steps that keep 3:1 contrast on each basemap (also applied to the 2D map); `tests/test_map3d.py` |
+| US-23 | `src/map3d.py`: pydeck ColumnLayer on a tilted Carto basemap, column height and colour both encode the chosen parameter, Start/End text labels, hover tooltip, text legend; alt text, summary and data table; keyboard instructions; colour scales limited to steps that keep 3:1 contrast against the basemap's land and water (also applied to the 2D map); `tests/test_map3d.py` |
 
 **Review:** 3D map delivered and checked in both themes; the browser contrast scan found no text
 below 4.5:1 on any tab; 60 tests passing. Velocity: 5 points.
@@ -193,7 +193,14 @@ below 4.5:1 on any tab; 60 tests passing. Velocity: 5 points.
   The map credit text in the 3D map was also unreadable in the dark theme and needed a CSS fix.
 - *Discovery:* The light 2D map's colour scale included two green steps below 3:1 contrast; both
   maps now use only the passing steps.
-- *Action item:* Try new visualizations at the real data density early, before tuning the styling.
+- *User feedback:* The product owner found the 3D map hard to read in the light theme. The cause:
+  colours had been checked against the white page, but the columns stand over the basemap's
+  grey-blue water, where the highest values (teal) reached only 2.36:1 and also matched the water's
+  hue. The light scale was changed to Plasma (navy → magenta, at least 3.67:1 on the water), the
+  dark scale dropped two steps that failed on the dark water, the columns were made fully opaque
+  with brighter lighting, and the tests now check against the real basemap colours.
+- *Action item:* Try new visualizations at the real data density early, before tuning the styling,
+  and test colours against what is actually behind them.
 
 ## Burndown summary
 

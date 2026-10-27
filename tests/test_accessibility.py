@@ -20,6 +20,8 @@ from src.config import (
     END_COLOR,
     FIT_LINE_COLOR,
     LIGHT_BACKGROUND,
+    DARK_BASEMAP_COLORS,
+    LIGHT_BASEMAP_COLORS,
     MAP_SCALE_DARK,
     MAP_SCALE_LIGHT,
     ROOT_DIR,
@@ -92,11 +94,12 @@ def test_chart_marks_stand_out_in_both_themes(color, background):
 
 
 @pytest.mark.parametrize(
-    ("scale", "background"), [(MAP_SCALE_LIGHT, LIGHT_BACKGROUND), (MAP_SCALE_DARK, DARK_BACKGROUND)]
+    ("scale", "basemap"), [(MAP_SCALE_LIGHT, LIGHT_BASEMAP_COLORS), (MAP_SCALE_DARK, DARK_BASEMAP_COLORS)]
 )
-def test_map_colour_scales_stand_out_on_their_basemap(scale, background):
+def test_map_colour_scales_stand_out_on_land_and_water(scale, basemap):
     for color in scale:
-        assert contrast_ratio(color, background) >= NON_TEXT_CONTRAST
+        for ground in basemap:
+            assert contrast_ratio(color, ground) >= NON_TEXT_CONTRAST, (color, ground)
 
 
 def test_depth_zones_are_not_identified_by_colour_alone():

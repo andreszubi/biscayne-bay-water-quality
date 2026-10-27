@@ -77,12 +77,17 @@ FIT_LINE_COLOR = "#7A6BE0"  # trend line (also dashed, so it is not colour-only)
 START_COLOR = "#008300"
 END_COLOR = "#D63C3B"
 
-# Map colour scales: the Viridis steps that keep at least 3:1 contrast on a
-# light basemap (dark purple -> teal) and on a dark one (blue -> yellow).
-_VIRIDIS = ["#440154", "#482878", "#3E4989", "#31688E", "#26828E",
-            "#1F9E89", "#35B779", "#6ECE58", "#B5DE2B", "#FDE725"]
-MAP_SCALE_LIGHT = _VIRIDIS[:6]
-MAP_SCALE_DARK = _VIRIDIS[3:]
+# Land and water colours of the Carto basemaps used by both maps. Map marks
+# are checked against these, not the page background: the light map's water
+# is a grey-blue that is much darker than white.
+LIGHT_BASEMAP_COLORS = ["#FAFAF8", "#D4DADC"]  # Positron land, water
+DARK_BASEMAP_COLORS = ["#0E0E0E", "#2C353C"]  # Dark Matter land, water
+
+# Map colour scales, every step at least 3:1 against both basemap colours.
+# Light: Plasma navy -> magenta (pink also stands apart from the grey-blue
+# water by hue). Dark: Viridis teal -> yellow.
+MAP_SCALE_LIGHT = ["#0D0887", "#46039F", "#7201A8", "#9C179E", "#BD3786"]
+MAP_SCALE_DARK = ["#1F9E89", "#35B779", "#6ECE58", "#B5DE2B", "#FDE725"]
 
 # Selected-option tags in multiselects. Streamlit draws them in the theme's
 # primary colour with white text, which is too light in the dark theme, so the
