@@ -24,7 +24,7 @@ good water quality. Raw sensor files are hard to read — this one has 69 column
 
 | | |
 |---|---|
-| **File** | `data/biscayneBay_waterquality.csv` (CIS 3590 course dataset) |
+| **File** | `data/biscayneBay_waterquality.csv` |
 | **Collected** | February 4, 2022, 16:18–16:34 local time |
 | **Location** | Northern Biscayne Bay, Miami, FL (≈ 25.912° N, 80.137° W) |
 | **Rows** | 942 readings, about one per second |
