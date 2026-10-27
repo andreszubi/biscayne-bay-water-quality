@@ -47,6 +47,13 @@ def apply_accessibility_styles() -> None:
         [data-testid="stSliderTickBar"] {{
             color: inherit !important;
         }}
+        /* Let metric labels wrap instead of being cut off with "…" on narrow screens. */
+        [data-testid="stMetricLabel"],
+        [data-testid="stMetricLabel"] * {{
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+        }}
         </style>"""
     )
 
@@ -157,14 +164,16 @@ def render_overview(df: pd.DataFrame) -> None:
         "along the route each reading was taken."
     )
 
-    # Two rows of three keep the labels from being cut off on narrower screens.
-    top, bottom = st.columns(3), st.columns(3)
-    top[0].metric("Avg. temperature", f"{df['Temperature (°C)'].mean():.2f} °C")
-    top[1].metric("Avg. salinity", f"{df['Salinity (ppt)'].mean():.1f} ppt")
-    top[2].metric("Avg. dissolved oxygen", f"{df['Dissolved Oxygen (mg/L)'].mean():.2f} mg/L")
+    # Two rows of three, with units in the labels so the large values stay short
+    # numbers that are never cut off. Bottom alignment keeps the numbers level
+    # when a long label wraps onto two lines on narrow screens.
+    top, bottom = st.columns(3, vertical_alignment="bottom"), st.columns(3, vertical_alignment="bottom")
+    top[0].metric("Avg. temperature (°C)", f"{df['Temperature (°C)'].mean():.2f}")
+    top[1].metric("Avg. salinity (ppt)", f"{df['Salinity (ppt)'].mean():.1f}")
+    top[2].metric("Avg. dissolved oxygen (mg/L)", f"{df['Dissolved Oxygen (mg/L)'].mean():.2f}")
     bottom[0].metric("Avg. pH", f"{df['pH'].mean():.2f}")
-    bottom[1].metric("Distance surveyed", f"{track_distance_m(df):,.0f} m")
-    bottom[2].metric("Survey duration", f"{survey_duration_min(df):.1f} min")
+    bottom[1].metric("Distance surveyed (m)", f"{track_distance_m(df):,.0f}")
+    bottom[2].metric("Survey duration (min)", f"{survey_duration_min(df):.1f}")
 
     left, right = st.columns(2)
     with left:
@@ -363,7 +372,7 @@ def main() -> None:
         render_insights(df, parameters)
 
     st.divider()
-    note("Data: Biscayne Bay autonomous vehicle survey, Feb 4, 2022 (CIS 3590 course dataset). Built with Streamlit and Plotly.")
+    note("Data: Biscayne Bay autonomous vehicle survey, Feb 4, 2022. Built with Streamlit and Plotly.")
 
 
 if __name__ == "__main__":
