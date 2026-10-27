@@ -7,8 +7,7 @@ returns one to place next to the map.
 """
 import pandas as pd
 import pydeck as pdk
-from plotly.colors import sample_colorscale, unlabel_rgb
-
+from src.colors import shade_bands
 from src.config import END_COLOR, MAP_SCALE_DARK, MAP_SCALE_LIGHT, START_COLOR
 
 MIN_HEIGHT_M = 3  # lowest value still shows as a visible stub
@@ -36,15 +35,19 @@ def _hex_to_rgba(hex_color: str, alpha: int = 255) -> list[int]:
 
 
 def column_data(df: pd.DataFrame, parameter: str, dark: bool = False) -> pd.DataFrame:
-    """One row per reading with the position, height, colour and tooltip text deck.gl needs."""
+    """One row per reading with the position, height, colour and tooltip text deck.gl needs.
+
+    Height follows the value smoothly; colour shows which equal-count band
+    (shade) the value falls in.
+    """
     t = _normalise(df[parameter])
-    colours = sample_colorscale(_scale(dark), t.tolist())
+    bands, _, shades = shade_bands(df[parameter], _scale(dark))
     return pd.DataFrame(
         {
             "lon": df["Longitude"],
             "lat": df["Latitude"],
             "height": MIN_HEIGHT_M + t * (MAX_HEIGHT_M - MIN_HEIGHT_M),
-            "color": [[int(c) for c in unlabel_rgb(rgb)] + [255] for rgb in colours],
+            "color": [_hex_to_rgba(shades[b]) for b in bands],
             # Pre-formatted strings for the hover tooltip.
             "time": df["Timestamp"].dt.strftime("%H:%M:%S"),
             "value": df[parameter].map(lambda v: f"{v:,.2f}"),
@@ -132,18 +135,22 @@ def track_3d_map(df: pd.DataFrame, parameter: str, dark: bool = False) -> pdk.De
 
 
 def legend_html(df: pd.DataFrame, parameter: str, dark: bool = False) -> str:
-    """A colour-bar legend with text labels for the 3D map."""
-    gradient = ", ".join(_scale(dark))
-    low, high = df[parameter].min(), df[parameter].max()
+    """A legend for the 3D map: one swatch per shade with its value range as text."""
+    _, edges, shades = shade_bands(df[parameter], _scale(dark))
+    items = "".join(
+        f"""<span style="display:inline-flex; align-items:center; gap:6px; margin:0 14px 6px 0;">
+              <span aria-hidden="true" style="width:22px; height:16px; border-radius:3px;
+                    border:1px solid currentColor; background:{shade};"></span>
+              {low:,.2f} – {high:,.2f}
+            </span>"""
+        for shade, low, high in zip(shades, edges[:-1], edges[1:])
+    )
     return f"""
-    <div role="img" aria-label="Legend: column height and colour show {parameter}, from {low:,.2f}
-         for the shortest columns to {high:,.2f} for the tallest.">
-      <div style="font-weight:600; margin-bottom:4px;">{parameter}: column height and colour</div>
-      <div style="display:flex; align-items:center; gap:10px; max-width:520px;">
-        <span>Low<br><b>{low:,.2f}</b></span>
-        <div style="flex:1; height:16px; border-radius:4px; border:1px solid currentColor;
-                    background:linear-gradient(to right, {gradient});"></div>
-        <span style="text-align:right;">High<br><b>{high:,.2f}</b></span>
+    <div>
+      <div style="font-weight:600; margin-bottom:6px;">
+        {parameter}: shortest, darkest columns are lowest; tallest, brightest are highest.
+        Each shade covers about the same number of readings.
       </div>
+      <div style="display:flex; flex-wrap:wrap;">{items}</div>
     </div>
     """

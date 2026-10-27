@@ -199,6 +199,12 @@ below 4.5:1 on any tab; 60 tests passing. Velocity: 5 points.
   hue. The light scale was changed to Plasma (navy → magenta, at least 3.67:1 on the water), the
   dark scale dropped two steps that failed on the dark water, the columns were made fully opaque
   with brighter lighting, and the tests now check against the real basemap colours.
+- *User feedback (second round):* The product owner asked for more shades of magenta so low and
+  high depths are easier to tell apart. Most depths cluster between 2.5 and 3.6 m, so a smooth
+  gradient painted most columns in similar middle shades. The light scale became six evenly spaced
+  shades of one magenta hue (dark plum → bright magenta, all at least 3.13:1 on the water), and
+  readings are now split into six equal-count bands, one shade each, on both maps. The legend lists
+  each band's depth range as text.
 - *Action item:* Try new visualizations at the real data density early, before tuning the styling,
   and test colours against what is actually behind them.
 

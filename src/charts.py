@@ -26,7 +26,7 @@ from src.config import (
     MAP_SCALE_LIGHT,
     START_COLOR,
 )
-from src.colors import readable_text_on
+from src.colors import readable_text_on, shade_bands
 
 DEPTH_ORDER = {DEPTH_ZONE_COL: DEPTH_LABELS}
 
@@ -205,14 +205,24 @@ def track_map(df: pd.DataFrame, parameter: str, dark: bool = False) -> go.Figure
     """Vehicle GPS track on a street map, coloured by the chosen parameter.
 
     `dark` picks a dark basemap and a colour scale whose every step keeps
-    3:1 contrast against it.
+    3:1 contrast against it. Colours come in the same equal-count shade bands
+    as the 3D map, so the two maps and their legends match.
     """
+    _, edges, shades = shade_bands(df[parameter], MAP_SCALE_DARK if dark else MAP_SCALE_LIGHT)
+    low, span = edges[0], (edges[-1] - edges[0]) or 1
+    # A "stepped" colour scale: each band is one flat shade between its edges.
+    stepped = [
+        [(edge - low) / span, shade]
+        for shade, a, b in zip(shades, edges[:-1], edges[1:])
+        for edge in (a, b)
+    ]
     fig = px.scatter_map(
         df,
         lat="Latitude",
         lon="Longitude",
         color=parameter,
-        color_continuous_scale=MAP_SCALE_DARK if dark else MAP_SCALE_LIGHT,
+        color_continuous_scale=stepped,
+        range_color=[edges[0], edges[-1]],
         hover_data={"Timestamp": "|%H:%M:%S", "Waypoint": True, "Water Depth (m)": ":.2f"},
         center={"lat": df["Latitude"].mean(), "lon": df["Longitude"].mean()},
         zoom=17.5,
@@ -240,6 +250,10 @@ def track_map(df: pd.DataFrame, parameter: str, dark: bool = False) -> go.Figure
                 name=f"{label} ({row['Timestamp']:%H:%M:%S})",
             )
         )
-    fig.update_coloraxes(colorbar_title_text=parameter)
+    fig.update_coloraxes(
+        colorbar_title_text=parameter,
+        colorbar_tickvals=edges,
+        colorbar_ticktext=[f"{e:,.2f}" for e in edges],
+    )
     fig.update_layout(height=560)
     return _finish(fig, f"Vehicle track coloured by {parameter}", "Markers")

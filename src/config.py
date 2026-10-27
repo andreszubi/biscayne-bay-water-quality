@@ -84,9 +84,11 @@ LIGHT_BASEMAP_COLORS = ["#FAFAF8", "#D4DADC"]  # Positron land, water
 DARK_BASEMAP_COLORS = ["#0E0E0E", "#2C353C"]  # Dark Matter land, water
 
 # Map colour scales, every step at least 3:1 against both basemap colours.
-# Light: Plasma navy -> magenta (pink also stands apart from the grey-blue
-# water by hue). Dark: Viridis teal -> yellow.
-MAP_SCALE_LIGHT = ["#0D0887", "#46039F", "#7201A8", "#9C179E", "#BD3786"]
+# Light: six shades of one magenta hue, dark plum -> bright magenta, with
+# evenly spaced lightness so neighbouring shades are easy to tell apart
+# (magenta also stands apart from the grey-blue water by hue).
+# Dark: Viridis teal -> yellow.
+MAP_SCALE_LIGHT = ["#3B022E", "#5A0046", "#75085D", "#970079", "#B0278E", "#C841A5"]
 MAP_SCALE_DARK = ["#1F9E89", "#35B779", "#6ECE58", "#B5DE2B", "#FDE725"]
 
 # Selected-option tags in multiselects. Streamlit draws them in the theme's

@@ -1,8 +1,11 @@
-"""WCAG 2.1 colour-contrast helpers.
+"""WCAG 2.1 colour-contrast helpers and colour banding for the maps.
 
-Used by the charts (to pick readable label colours) and by the accessibility
-tests (to check every colour pair in the light and dark themes).
+Used by the charts (to pick readable label colours), by both maps (to split
+values into clearly different shades) and by the accessibility tests (to
+check every colour pair in the light and dark themes).
 """
+import numpy as np
+import pandas as pd
 from plotly.colors import hex_to_rgb, unlabel_rgb
 
 # WCAG 2.1 AA minimums.
@@ -35,3 +38,22 @@ def contrast_ratio(a: str, b: str) -> float:
 def readable_text_on(fill: str) -> str:
     """Black or white, whichever has more contrast against `fill`."""
     return "#000000" if contrast_ratio("#000000", fill) >= contrast_ratio("#FFFFFF", fill) else "#FFFFFF"
+
+
+def shade_bands(values: pd.Series, shades: list[str]) -> tuple[pd.Series, list[float], list[str]]:
+    """Split values into equal-count bands, one shade per band.
+
+    Readings cluster around typical values, so a smooth gradient would paint
+    most of them in near-identical middle shades. Equal-count bands use every
+    shade about equally, which makes low and high values easy to tell apart.
+
+    Returns each value's band number (0 = lowest), the band edges, and the
+    shade for each band (spread across the scale when there are fewer bands
+    than shades, e.g. for a parameter with few distinct values).
+    """
+    if values.nunique() < 2:
+        return pd.Series(0, index=values.index), [float(values.min()), float(values.max())], [shades[len(shades) // 2]]
+    codes, edges = pd.qcut(values, q=len(shades), labels=False, retbins=True, duplicates="drop")
+    n_bands = len(edges) - 1
+    picks = np.linspace(0, len(shades) - 1, n_bands).round().astype(int)
+    return codes.astype(int), [float(e) for e in edges], [shades[i] for i in picks]
