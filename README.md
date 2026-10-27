@@ -3,8 +3,9 @@
 An interactive **Streamlit** web app for exploring water quality data collected by an autonomous
 vehicle in northern Biscayne Bay, Miami, FL.
 
-**Live app:** _add your Streamlit Community Cloud URL here_
-**Course:** CIS 3590 – Internship-Ready Software Development
+**Live app:** _add your Streamlit Community Cloud URL here_  
+**Repository:** https://github.com/andreszubi/biscayne-bay-water-quality
+
 **Author:** Andres Zubizarreta
 
 ---
@@ -80,8 +81,8 @@ button. All Plotly charts have a title, labelled axes and a legend, and support 
 Requires Python 3.10 or newer.
 
 ```bash
-git clone https://github.com/<your-username>/<repo-name>.git
-cd <repo-name>
+git clone https://github.com/andreszubi/biscayne-bay-water-quality.git
+cd biscayne-bay-water-quality
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
