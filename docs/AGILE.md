@@ -35,9 +35,10 @@ A user story is **done** when:
 1. The feature works in the running app with no errors or warnings.
 2. Code is modular (logic lives in `src/`, layout in `app.py`) and has docstrings/comments.
 3. Automated tests for the feature are written and `python -m pytest` passes.
-4. Any chart has a title, labelled axes and a legend.
-5. Text explains to the user what they are looking at.
-6. The change is committed to Git with a descriptive message that names the sprint.
+4. Any chart has a title, labelled axes and a legend, plus a text summary and data table.
+5. Text and chart colours pass the WCAG 2.1 AA contrast tests in both the light and dark themes.
+6. Text explains to the user what they are looking at.
+7. The change is committed to Git with a descriptive message that names the sprint.
 
 ## Product backlog
 
@@ -61,11 +62,15 @@ Priority uses **MoSCoW** (Must / Should / Could / Won't this release). Estimates
 | US-13 | As a researcher, I want uncalibrated optical sensors flagged and hidden by default, so I'm not misled by impossible values. | Should | 2 | 3 | ✅ Done |
 | US-14 | As the instructor, I want a README, requirements.txt and a public URL, so I can run and grade the app. | Must | 3 | 3 | ✅ Done (URL added at deployment) |
 | US-15 | As a developer, I want tests to run automatically on every push, so regressions are caught early. | Could | 2 | 3 | ✅ Done |
+| US-19 | As a user, I want to choose a light or dark theme, so the app is comfortable in any lighting. | Should | 3 | 4 | ✅ Done |
+| US-20 | As a user with low vision, I want all text and chart colours to have enough contrast in both themes, so I can read everything. | Must | 5 | 4 | ✅ Done |
+| US-21 | As a colour-blind user, I want chart categories marked by shape, pattern or label as well as colour, so I can tell them apart. | Must | 3 | 4 | ✅ Done |
+| US-22 | As a screen-reader user, I want a text summary and a data table for every chart, so I get the same information without seeing it. | Must | 3 | 4 | ✅ Done |
 | US-16 | As a user, I want to upload my own water quality CSV and explore it the same way. | Could | 5 | – | 📋 Backlog (Project 2) |
 | US-17 | As a user, I want to ask questions about the data in natural language (AI assistant). | Won't (this release) | 8 | – | 📋 Backlog (Project 2) |
 | US-18 | As a researcher, I want to compare multiple survey days side by side. | Won't (this release) | 5 | – | 📋 Backlog |
 
-**Total delivered:** 43 story points across 3 sprints.
+**Total delivered:** 57 story points across 4 sprints.
 
 ## Sprint 1 – Data foundation
 
@@ -141,19 +146,45 @@ insights, and prepare it for deployment.
 - *Action item:* Include a manual browser check of every tab in the Definition of Done for future
   UI work.
 
+## Sprint 4 – Themes and accessibility
+
+**Sprint goal:** Offer light and dark themes and bring the whole app up to WCAG 2.1 AA, so it is
+readable and usable for everyone.
+
+| Story | Tasks |
+|---|---|
+| US-19 | Custom `[theme.light]` and `[theme.dark]` palettes in `.streamlit/config.toml`; theme switcher in the ⋮ menu; sidebar instructions; map background that follows the theme or can be chosen |
+| US-20 | Chart colours chosen to reach 3:1 on both backgrounds; per-cell black/white heatmap labels; replaced faded captions; CSS fixes for multiselect tags and slider labels; `tests/test_accessibility.py` |
+| US-21 | Marker shapes in the scatter plot, fill patterns in the histogram, dashed trend line, labelled Start/End map markers; palette checked with a colour-blindness simulator |
+| US-22 | `show_chart()` helper adds a written summary and a data-table expander under every chart; fixed heading order |
+
+**Review:** Both themes audited in the browser on all five tabs with an automated contrast scan
+(zero text below 4.5:1); 52 tests passing. Velocity: 14 points.
+
+**Retrospective**
+- *What went well:* Writing the contrast rules as tests means they are checked on every push, not
+  just once.
+- *What didn't:* Some problems only appeared in the running app, not in the config: Streamlit's
+  caption style, slider min/max labels and multiselect tags all fell below 4.5:1. A browser scan of
+  the real page found them.
+- *Discovery:* One theme colour cannot serve as both text on a dark background and a background
+  behind white text, so the multiselect tags needed their own colour.
+- *Action item:* Run the browser contrast scan in both themes as part of the Definition of Done for
+  any UI change.
+
 ## Burndown summary
 
-| | Sprint 1 | Sprint 2 | Sprint 3 |
-|---|---|---|---|
-| Points committed | 10 | 14 | 19 |
-| Points completed | 10 | 14 | 19 |
-| Points remaining in release | 33 | 19 | 0 |
+| | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 |
+|---|---|---|---|---|
+| Points committed | 10 | 14 | 19 | 14 |
+| Points completed | 10 | 14 | 19 | 14 |
+| Points remaining in release | 47 | 33 | 14 | 0 |
 
 ## Kanban board (end of release)
 
 | 📋 Backlog | 🔄 In progress | ✅ Done |
 |---|---|---|
-| US-16 Upload own CSV | – | US-01 … US-15 |
+| US-16 Upload own CSV | – | US-01 … US-15, US-19 … US-22 |
 | US-17 AI assistant | | |
 | US-18 Multi-day comparison | | |
 

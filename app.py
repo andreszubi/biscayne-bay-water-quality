@@ -6,6 +6,7 @@ by an autonomous vehicle in northern Biscayne Bay, Miami, FL.
 Run locally with:  streamlit run app.py
 """
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
 from src import charts
@@ -15,6 +16,8 @@ from src.config import (
     DATA_PATH,
     DEPTH_LABELS,
     DEPTH_ZONE_COL,
+    TAG_BACKGROUND,
+    TAG_TEXT,
 )
 from src.data_loader import filter_data, load_data, survey_duration_min, track_distance_m
 from src.insights import generate_insights
@@ -32,13 +35,55 @@ def get_data() -> pd.DataFrame:
     return load_data(DATA_PATH)
 
 
+def apply_accessibility_styles() -> None:
+    """Small CSS fixes for contrast problems the theme settings cannot reach."""
+    st.html(
+        f"""<style>
+        [data-testid="stMultiSelectTagsContainer"] [data-tag] {{
+            background-color: {TAG_BACKGROUND} !important;
+            color: {TAG_TEXT} !important;
+        }}
+        /* Slider min/max labels are faded to ~4.2:1 by default; use full text colour. */
+        [data-testid="stSliderTickBar"] {{
+            color: inherit !important;
+        }}
+        </style>"""
+    )
+
+
+def show_chart(fig: go.Figure, table: pd.DataFrame, summary: str) -> None:
+    """Draw a chart followed by a text summary and the same data as a table.
+
+    The summary and table give screen-reader and keyboard users the
+    information the chart shows visually (WCAG 1.1.1 non-text content).
+    """
+    st.plotly_chart(fig, width="stretch")
+    st.markdown(f"**Chart summary:** {summary}")
+    with st.expander("View the data behind this chart as a table"):
+        st.dataframe(table, hide_index=True, width="stretch")
+
+
+def note(text: str, container=st) -> None:
+    """Secondary text in italics at full text colour.
+
+    st.caption fades text to about 4.2:1 contrast, which is below the WCAG AA
+    minimum of 4.5:1, so it is not used in this app.
+    """
+    container.markdown(f"*{text}*")
+
+
+def describe_range(series: pd.Series) -> str:
+    """'from 5.03 to 6.48 (average 5.37)' for a numeric column."""
+    return f"from {series.min():,.2f} to {series.max():,.2f} (average {series.mean():,.2f})"
+
+
 # ---------------------------------------------------------------------------
 # Sidebar
 # ---------------------------------------------------------------------------
-def render_sidebar(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
+def render_sidebar(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str], bool]:
     """Draw the filter widgets and return the filtered data and selectable parameters."""
     st.sidebar.header("🔎 Filters")
-    st.sidebar.caption("Every section of the app updates when you change these filters.")
+    note("Every section of the app updates when you change these filters.", st.sidebar)
 
     start, end = df["Timestamp"].min().to_pydatetime(), df["Timestamp"].max().to_pydatetime()
     time_range = st.sidebar.slider(
@@ -75,17 +120,34 @@ def render_sidebar(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
 
     filtered = filter_data(df, time_range, waypoint_range, depth_zones)
     st.sidebar.divider()
-    st.sidebar.metric("Readings selected", f"{len(filtered):,}", f"of {len(df):,} total", delta_color="off")
+    st.sidebar.metric("Readings selected", f"{len(filtered):,} of {len(df):,}")
+
+    st.sidebar.divider()
+    st.sidebar.header("🌓 Appearance")
+    st.sidebar.markdown(
+        "Switch between the **light** and **dark** themes from the **⋮ menu** at the top right of the "
+        "page (**System**, **Light** or **Dark**). By default the app follows your device setting."
+    )
+    map_background = st.sidebar.radio(
+        "Map background",
+        ["Match app theme", "Light", "Dark"],
+        help="The street map is an image, so it can be switched separately. With 'Match app theme', "
+        "the map catches up with a theme change the next time you interact with the app.",
+    )
+    if map_background == "Match app theme":
+        dark_map = st.context.theme.type == "dark"
+    else:
+        dark_map = map_background == "Dark"
 
     parameters = ALL_PARAMETERS if include_optical else CORE_PARAMETERS
-    return filtered, parameters
+    return filtered, parameters, dark_map
 
 
 # ---------------------------------------------------------------------------
 # Sections
 # ---------------------------------------------------------------------------
 def render_overview(df: pd.DataFrame) -> None:
-    st.subheader("Overview")
+    st.header("Overview")
     st.markdown(
         "Biscayne Bay is a shallow, subtropical lagoon next to Miami that supports seagrass beds, "
         "fisheries and coral habitat. On **February 4, 2022**, an autonomous vehicle equipped with a "
@@ -95,35 +157,36 @@ def render_overview(df: pd.DataFrame) -> None:
         "along the route each reading was taken."
     )
 
-    cols = st.columns(5)
-    cols[0].metric("Avg. temperature", f"{df['Temperature (°C)'].mean():.2f} °C")
-    cols[1].metric("Avg. salinity", f"{df['Salinity (ppt)'].mean():.1f} ppt")
-    cols[2].metric("Avg. dissolved oxygen", f"{df['Dissolved Oxygen (mg/L)'].mean():.2f} mg/L")
-    cols[3].metric("Avg. pH", f"{df['pH'].mean():.2f}")
-    cols[4].metric(
-        "Distance surveyed",
-        f"{track_distance_m(df):,.0f} m",
-        f"{survey_duration_min(df):.1f} min",
-        delta_color="off",
-    )
+    # Two rows of three keep the labels from being cut off on narrower screens.
+    top, bottom = st.columns(3), st.columns(3)
+    top[0].metric("Avg. temperature", f"{df['Temperature (°C)'].mean():.2f} °C")
+    top[1].metric("Avg. salinity", f"{df['Salinity (ppt)'].mean():.1f} ppt")
+    top[2].metric("Avg. dissolved oxygen", f"{df['Dissolved Oxygen (mg/L)'].mean():.2f} mg/L")
+    bottom[0].metric("Avg. pH", f"{df['pH'].mean():.2f}")
+    bottom[1].metric("Distance surveyed", f"{track_distance_m(df):,.0f} m")
+    bottom[2].metric("Survey duration", f"{survey_duration_min(df):.1f} min")
 
     left, right = st.columns(2)
     with left:
-        st.markdown("#### How to use this app")
+        st.subheader("How to use this app")
         st.markdown(
             "1. Use the **Filters** in the sidebar to choose a time window, mission waypoints and depth zones.\n"
             "2. Browse the tabs above: **Data** shows the raw table, **Visualizations** has interactive "
             "Plotly charts, **Map** shows the vehicle's route and **Insights** summarizes the findings.\n"
             "3. Hover over any chart for exact values, drag to zoom, and double-click to reset.\n"
-            "4. Download the filtered data as a CSV from the **Data** tab."
+            "4. Every chart is followed by a written summary and a **View the data behind this chart** "
+            "table, so the information is available without seeing the chart.\n"
+            "5. Download the filtered data as a CSV from the **Data** tab.\n"
+            "6. Prefer a light or dark screen? Open the **⋮ menu** (top right) and choose **Light** or "
+            "**Dark**, or **System** to follow your device."
         )
     with right:
-        st.markdown("#### What is measured")
+        st.subheader("What is measured")
         st.markdown("\n".join(f"- **{name}** — {desc}" for name, desc in ALL_PARAMETERS.items()))
 
 
 def render_data(df: pd.DataFrame, parameters: dict[str, str]) -> None:
-    st.subheader("Data Explorer")
+    st.header("Data Explorer")
     st.markdown(
         "The table below shows the cleaned readings that match your filters. Raw sensor column names "
         "were renamed to plain-language names with units, and each reading was assigned a depth zone."
@@ -149,16 +212,16 @@ def render_data(df: pd.DataFrame, parameters: dict[str, str]) -> None:
 
     numeric = [c for c in columns if pd.api.types.is_numeric_dtype(df[c])]
     if numeric:
-        st.markdown("#### Summary statistics")
-        st.caption("Count, mean, standard deviation, minimum, quartiles and maximum for each numeric column.")
+        st.subheader("Summary statistics")
+        note("Count, mean, standard deviation, minimum, quartiles and maximum for each numeric column.")
         st.dataframe(df[numeric].describe().T.round(3), width="stretch")
 
 
 def render_visualizations(df: pd.DataFrame, parameters: dict[str, str]) -> None:
-    st.subheader("Visualizations")
+    st.header("Visualizations")
     names = list(parameters)
 
-    st.markdown("#### Trend over time")
+    st.subheader("Trend over time")
     st.markdown(
         "See how a parameter changed during the survey. The rolling average smooths out sensor noise "
         "so the overall trend is easier to read."
@@ -167,13 +230,18 @@ def render_visualizations(df: pd.DataFrame, parameters: dict[str, str]) -> None:
     param = c1.selectbox("Parameter", names, key="ts_param")
     window = c2.slider("Rolling average window (readings)", 1, 120, 30, step=1)
     show_raw = c3.checkbox("Show raw readings", value=True)
-    st.plotly_chart(charts.time_series(df, param, window, show_raw), width="stretch")
-    st.caption(parameters[param])
+    note(parameters[param])
+    show_chart(
+        charts.time_series(df, param, window, show_raw),
+        df[["Timestamp", param]],
+        f"{param} ranged {describe_range(df[param])} between "
+        f"{df['Timestamp'].min():%H:%M:%S} and {df['Timestamp'].max():%H:%M:%S}.",
+    )
 
     st.divider()
-    st.markdown("#### Relationships")
+    st.subheader("Relationships")
     st.markdown(
-        "Compare two parameters. Each dot is one reading, coloured by depth zone. The dashed line is a "
+        "Compare two parameters. Each point is one reading; its colour and shape show the depth zone. The dashed line is a "
         "least-squares fit, and **r** in the legend is the Pearson correlation (−1 to 1)."
     )
     c1, c2 = st.columns(2)
@@ -182,62 +250,99 @@ def render_visualizations(df: pd.DataFrame, parameters: dict[str, str]) -> None:
     if x == y:
         st.info("Pick two different parameters to compare.")
     else:
-        st.plotly_chart(charts.relationship(df, x, y), width="stretch")
+        r = df[x].corr(df[y])
+        show_chart(
+            charts.relationship(df, x, y),
+            df[["Timestamp", DEPTH_ZONE_COL, x, y]],
+            f"{len(df):,} readings. The correlation between {x} and {y} is r = {r:.2f} "
+            f"({'positive' if r > 0 else 'negative'}: as {x} rises, {y} tends to "
+            f"{'rise' if r > 0 else 'fall'}).",
+        )
 
     st.divider()
-    st.markdown("#### Distribution")
+    st.subheader("Distribution")
     st.markdown(
-        "How are the values spread out? The histogram counts readings in each value range, and the box "
-        "plot above it marks the median, quartiles and outliers for each depth zone."
+        "How are the values spread out? The stacked histogram counts readings in each value range, split by "
+        "depth zone (each zone has its own colour and fill pattern). The box plots above it mark the median, "
+        "quartiles and outliers for each zone."
     )
     dist_param = st.selectbox("Parameter", names, index=names.index("Dissolved Oxygen (mg/L)"), key="dist")
-    st.plotly_chart(charts.distribution(df, dist_param), width="stretch")
+    zone_stats = (
+        df.groupby(DEPTH_ZONE_COL, observed=True)[dist_param]
+        .describe()[["count", "min", "25%", "50%", "75%", "max"]]
+        .round(2)
+        .reset_index()
+    )
+    show_chart(
+        charts.distribution(df, dist_param),
+        zone_stats,
+        f"{dist_param} ranged {describe_range(df[dist_param])}; the median was {df[dist_param].median():.2f}. "
+        "The table lists the box-plot values for each depth zone.",
+    )
 
 
-def render_map(df: pd.DataFrame, parameters: dict[str, str]) -> None:
-    st.subheader("Survey Map")
+def render_map(df: pd.DataFrame, parameters: dict[str, str], dark_map: bool) -> None:
+    st.header("Survey Map")
     st.markdown(
         "Each dot is a reading at the vehicle's GPS position. Choose a parameter to colour the route and "
-        "spot where in the bay conditions change. Green marks where the selected data starts and red "
-        "where it ends."
+        "spot where in the bay conditions change. The markers labelled **Start** and **End** show where the "
+        "selected data begins and ends. You can change the map background in the sidebar."
     )
     names = list(parameters)
     param = st.selectbox("Colour the track by", names, index=names.index("Water Depth (m)"), key="map_param")
-    st.plotly_chart(charts.track_map(df, param), width="stretch")
-    st.caption(parameters[param])
+    note(parameters[param])
+    show_chart(
+        charts.track_map(df, param, dark=dark_map),
+        df[["Timestamp", "Latitude", "Longitude", "Waypoint", param]],
+        f"The vehicle travelled about {track_distance_m(df):,.0f} m. Along the route, {param} ranged "
+        f"{describe_range(df[param])}.",
+    )
 
 
 def render_insights(df: pd.DataFrame, parameters: dict[str, str]) -> None:
-    st.subheader("Insights")
+    st.header("Insights")
     st.markdown("Key findings, recalculated automatically for the data that matches your filters:")
     for text in generate_insights(df):
         st.markdown(f"- {text}")
 
     st.divider()
-    st.markdown("#### Correlation matrix")
+    st.subheader("Correlation matrix")
     st.markdown(
-        "Each cell is the Pearson correlation between two parameters. Red cells rise together, blue cells "
-        "move in opposite directions, and white means there is no linear link."
+        "Each cell is the Pearson correlation (r) between two parameters, and its value is printed in the "
+        "cell. Red cells rise together, blue cells move in opposite directions, and grey means there is no "
+        "linear link."
     )
-    st.plotly_chart(charts.correlation_heatmap(df, list(parameters)), width="stretch")
+    corr = df[list(parameters)].corr().round(2)
+    show_chart(
+        charts.correlation_heatmap(df, list(parameters)),
+        corr.reset_index(names="Parameter"),
+        "A grid of correlations between every pair of parameters. The table shows the same values.",
+    )
 
     st.divider()
-    st.markdown("#### Compare depth zones")
+    st.subheader("Compare depth zones")
     st.markdown("Does a parameter differ between shallow and deep water? Bars show the average in each zone.")
     names = list(parameters)
     param = st.selectbox("Parameter", names, index=names.index("Dissolved Oxygen (mg/L)"), key="zone")
-    st.plotly_chart(charts.zone_comparison(df, param), width="stretch")
+    means = df.groupby(DEPTH_ZONE_COL, observed=True)[param].agg(["mean", "std", "count"]).round(2)
+    show_chart(
+        charts.zone_comparison(df, param),
+        means.reset_index(),
+        "Average " + param + ": "
+        + "; ".join(f"{zone} {row['mean']:.2f}" for zone, row in means.iterrows()) + ".",
+    )
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main() -> None:
+    apply_accessibility_styles()
     st.title("🌊 Biscayne Bay Water Quality Explorer")
-    st.caption("Interactive analysis of autonomous-vehicle water quality data · Northern Biscayne Bay, Miami, FL")
+    note("Interactive analysis of autonomous-vehicle water quality data · Northern Biscayne Bay, Miami, FL")
 
     df_all = get_data()
-    df, parameters = render_sidebar(df_all)
+    df, parameters, dark_map = render_sidebar(df_all)
 
     if len(df) < 2:
         st.warning("No data matches the current filters. Widen the time window, waypoints or depth zones.")
@@ -253,12 +358,12 @@ def main() -> None:
     with visuals:
         render_visualizations(df, parameters)
     with survey_map:
-        render_map(df, parameters)
+        render_map(df, parameters, dark_map)
     with insights:
         render_insights(df, parameters)
 
     st.divider()
-    st.caption("Data: Biscayne Bay autonomous vehicle survey, Feb 4, 2022 (CIS 3590 course dataset). Built with Streamlit and Plotly.")
+    note("Data: Biscayne Bay autonomous vehicle survey, Feb 4, 2022 (CIS 3590 course dataset). Built with Streamlit and Plotly.")
 
 
 if __name__ == "__main__":

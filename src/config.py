@@ -55,7 +55,36 @@ ALL_PARAMETERS = {**CORE_PARAMETERS, **OPTICAL_PARAMETERS}
 DEPTH_ZONE_COL = "Depth Zone"
 DEPTH_BINS = [0, 2.5, 3.5, float("inf")]
 DEPTH_LABELS = ["Shallow (< 2.5 m)", "Moderate (2.5–3.5 m)", "Deep (> 3.5 m)"]
-DEPTH_COLORS = dict(zip(DEPTH_LABELS, ["#7FB8E0", "#2E7EC1", "#0B3C73"]))
+
+# ---------------------------------------------------------------------------
+# Accessible colours (WCAG 2.1 AA)
+# ---------------------------------------------------------------------------
+# Chart colours are fixed in Python, but viewers can switch between the light
+# and dark themes in the browser, so every mark colour must reach 3:1 contrast
+# against BOTH page backgrounds (WCAG 1.4.11). The three depth-zone colours
+# also stay distinguishable for colour-blind viewers, and every chart pairs
+# colour with a second cue (marker shape, fill pattern or a text label).
+LIGHT_BACKGROUND = "#FFFFFF"
+DARK_BACKGROUND = "#0E1621"
+
+DEPTH_COLORS = dict(zip(DEPTH_LABELS, ["#2A78D6", "#D95926", "#199E70"]))
+DEPTH_SYMBOLS = dict(zip(DEPTH_LABELS, ["circle", "diamond", "square"]))
+DEPTH_PATTERNS = dict(zip(DEPTH_LABELS, ["", "/", "x"]))
+
+ACCENT_COLOR = "#2A78D6"  # main data line
+CONTEXT_COLOR = "#7F8C9A"  # raw readings, error bars and other secondary marks
+FIT_LINE_COLOR = "#7A6BE0"  # trend line (also dashed, so it is not colour-only)
+START_COLOR = "#008300"
+END_COLOR = "#D63C3B"
+
+# Selected-option tags in multiselects. Streamlit draws them in the theme's
+# primary colour with white text, which is too light in the dark theme, so the
+# app gives them this darker blue (white text reaches 6.4:1) in both themes.
+TAG_BACKGROUND = "#1F5FA8"
+TAG_TEXT = "#FFFFFF"
+
+# Diverging blue <-> red scale with a neutral grey midpoint for correlations.
+DIVERGING_SCALE = [[0.0, "#1C5CAB"], [0.5, "#E2E1DD"], [1.0, "#C23333"]]
 
 # Reference thresholds used by the Insights section.
 DO_STRESS_MG_L = 4.0

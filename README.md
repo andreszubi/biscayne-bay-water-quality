@@ -61,8 +61,33 @@ which the charts use as their legend.
 | **💡 Insights** | Auto-generated findings, correlation heatmap and depth-zone comparison chart |
 
 **Interactive widgets:** time-window slider, waypoint range slider, depth-zone multiselect,
-optical-sensor checkbox, parameter dropdowns, rolling-window slider, column picker and a download
-button. All Plotly charts have a title, labelled axes and a legend, and support hover, zoom and pan.
+optical-sensor checkbox, map-background selector, parameter dropdowns, rolling-window slider,
+column picker and a download button. All Plotly charts have a title, labelled axes and a legend,
+and support hover, zoom and pan.
+
+## Light and dark themes
+
+The app has a custom **light theme** and **dark theme**. It follows the viewer's device setting by
+default. To switch, open the **⋮ menu** at the top right of the app and choose **System**,
+**Light** or **Dark**. The charts and map are designed to stay readable in both themes. The map
+background can also be set separately from the sidebar (**Appearance → Map background**).
+
+## Accessibility
+
+The app is designed to meet **WCAG 2.1 level AA**:
+
+| Guideline | How the app meets it |
+|---|---|
+| **1.4.3 Text contrast (4.5:1)** | Theme text, link and tag colours were chosen and tested for at least 4.5:1 in both themes. Streamlit's faded caption style (about 4.2:1) is not used, and slider labels and selected-filter tags get small CSS fixes. |
+| **1.4.11 Non-text contrast (3:1)** | Every chart colour (lines, points, bars, markers) reaches 3:1 against **both** the light and the dark background. Widget borders are turned on. |
+| **1.4.1 Use of colour** | Nothing is shown by colour alone: depth zones use colour **and** marker shape (scatter) or fill pattern (histogram), the trend line is dashed, map markers carry "Start"/"End" text, links are underlined, and correlation values are printed in each heatmap cell. |
+| **Colour-blind safety** | The three depth-zone colours were checked with a colour-vision-deficiency simulator: they stay clearly distinct for red-green colour blindness (the most common types). For the rarer blue-yellow type they are closer, which is one reason every chart also uses shapes, patterns or labels. The map uses the colour-blind-safe Viridis scale. |
+| **1.1.1 Non-text content** | Every chart is followed by a written **Chart summary** and a **View the data behind this chart** table, so screen-reader users get the same information. |
+| **1.3.1 Info and relationships / 2.4.6 Headings** | Headings follow a proper order (page title → section → subsection) with no skipped levels. |
+| **2.1.1 Keyboard** | All controls are standard Streamlit widgets that work with the keyboard. |
+
+These rules are enforced by `tests/test_accessibility.py`, which computes the WCAG contrast ratio
+of every theme colour pair and chart colour, so a future colour change cannot quietly break them.
 
 ## User instructions
 
@@ -77,7 +102,7 @@ button. All Plotly charts have a title, labelled axes and a legend, and support 
 
 ## Run locally
 
-Requires Python 3.10 or newer.
+Requires Python 3.11 or newer.
 
 ```bash
 git clone https://github.com/andreszubi/biscayne-bay-water-quality.git
@@ -98,7 +123,8 @@ python -m pytest
 ```
 
 The tests check data loading and filtering, that every chart has a title, axis labels and a
-legend, the generated insights, and that the full app runs without errors.
+legend, the generated insights, colour contrast in both themes, and that the full app runs
+without errors.
 
 ## Deploy to Streamlit Community Cloud
 
@@ -115,12 +141,13 @@ legend, the generated insights, and that the full app runs without errors.
 │   ├── config.py           # Paths, column names, parameter descriptions, thresholds
 │   ├── data_loader.py      # Load, clean and filter the CSV; distance/duration helpers
 │   ├── charts.py           # Plotly figure builders (one function per chart)
+│   ├── colors.py           # WCAG contrast-ratio helpers
 │   └── insights.py         # Plain-language findings generated from the data
 ├── tests/                  # pytest unit tests and headless app tests
 ├── data/biscayneBay_waterquality.csv
 ├── docs/AGILE.md           # Product backlog, sprints, reviews and retrospectives
 ├── .github/workflows/ci.yml  # Runs the tests on every push and pull request
-├── .streamlit/config.toml  # Theme
+├── .streamlit/config.toml  # Light and dark themes
 ├── requirements.txt        # Runtime dependencies
 └── requirements-dev.txt    # Adds pytest for development
 ```
