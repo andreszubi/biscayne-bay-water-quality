@@ -8,22 +8,24 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from src.config import DEPTH_COLORS, DEPTH_LABELS, DEPTH_ZONE_COL, MAP_CENTER
+from src.config import DEPTH_COLORS, DEPTH_LABELS, DEPTH_ZONE_COL
 
 
 def _finish(fig: go.Figure, title: str, legend_title: str = "") -> go.Figure:
     """Apply the shared title/legend/margin styling used by every chart."""
     fig.update_layout(
-        title={"text": title, "x": 0, "xanchor": "left"},
+        # Title sits at the very top; the legend sits just above the plot area,
+        # so the two never overlap even when the title is long.
+        title={"text": title, "x": 0, "xanchor": "left", "yref": "container", "y": 0.98, "yanchor": "top"},
         legend={
             "title": {"text": legend_title},
             "orientation": "h",
             "yanchor": "bottom",
-            "y": 1.0,
+            "y": 1.02,
             "xanchor": "right",
             "x": 1,
         },
-        margin={"l": 10, "r": 10, "t": 70, "b": 10},
+        margin={"l": 10, "r": 10, "t": 100, "b": 10},
         showlegend=True,
     )
     return fig
@@ -125,6 +127,7 @@ def zone_comparison(df: pd.DataFrame, parameter: str) -> go.Figure:
         text_auto=".2f",
         hover_data={"count": True},
     )
+    fig.update_traces(textposition="inside", insidetextanchor="middle", textfont_size=14)
     fig.update_xaxes(title_text="Depth zone")
     fig.update_yaxes(title_text=f"Mean {parameter}")
     return _finish(fig, f"Average {parameter} by depth zone (error bars = ±1 std)", "Depth zone")
@@ -144,6 +147,7 @@ def correlation_heatmap(df: pd.DataFrame, parameters: list[str]) -> go.Figure:
     fig.update_xaxes(title_text="Parameter", tickangle=-30)
     fig.update_yaxes(title_text="Parameter")
     fig.update_coloraxes(colorbar_title_text="Correlation (r)")
+    fig.update_layout(height=560)
     fig = _finish(fig, "Correlation between water quality parameters")
     # A heatmap's legend is its colour bar; there are no discrete traces to list.
     fig.update_layout(showlegend=False)
@@ -159,8 +163,8 @@ def track_map(df: pd.DataFrame, parameter: str) -> go.Figure:
         color=parameter,
         color_continuous_scale="Viridis",
         hover_data={"Timestamp": "|%H:%M:%S", "Waypoint": True, "Water Depth (m)": ":.2f"},
-        center=MAP_CENTER,
-        zoom=16,
+        center={"lat": df["Latitude"].mean(), "lon": df["Longitude"].mean()},
+        zoom=17.5,
         map_style="carto-positron",
     )
     fig.update_traces(marker={"size": 8}, name="Reading", showlegend=True)
