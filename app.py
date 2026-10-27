@@ -9,7 +9,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from src import charts
+from src import charts, map3d
 from src.config import (
     ALL_PARAMETERS,
     CORE_PARAMETERS,
@@ -47,6 +47,13 @@ def apply_accessibility_styles() -> None:
         [data-testid="stSliderTickBar"] {{
             color: inherit !important;
         }}
+        /* Map credits ("© OpenStreetMap contributors") inherit the page text colour in
+           the 3D map, which is unreadable on their white box in the dark theme. */
+        .mapboxgl-ctrl-attrib, .maplibregl-ctrl-attrib,
+        .mapboxgl-ctrl-attrib a, .maplibregl-ctrl-attrib a {{
+            background-color: #FFFFFF !important;
+            color: #000000 !important;
+        }}
         /* Let metric labels wrap instead of being cut off with "…" on narrow screens. */
         [data-testid="stMetricLabel"],
         [data-testid="stMetricLabel"] * {{
@@ -65,6 +72,11 @@ def show_chart(fig: go.Figure, table: pd.DataFrame, summary: str) -> None:
     information the chart shows visually (WCAG 1.1.1 non-text content).
     """
     st.plotly_chart(fig, width="stretch")
+    summary_and_table(table, summary)
+
+
+def summary_and_table(table: pd.DataFrame, summary: str) -> None:
+    """Written summary plus an expandable data table for a chart or map."""
     st.markdown(f"**Chart summary:** {summary}")
     with st.expander("View the data behind this chart as a table"):
         st.dataframe(table, hide_index=True, width="stretch")
@@ -138,8 +150,9 @@ def render_sidebar(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str], bool
     map_background = st.sidebar.radio(
         "Map background",
         ["Match app theme", "Light", "Dark"],
-        help="The street map is an image, so it can be switched separately. With 'Match app theme', "
-        "the map catches up with a theme change the next time you interact with the app.",
+        help="Applies to the 2D and 3D maps. The street map is an image, so it can be switched "
+        "separately. With 'Match app theme', the maps catch up with a theme change the next time "
+        "you interact with the app.",
     )
     if map_background == "Match app theme":
         dark_map = st.context.theme.type == "dark"
@@ -293,19 +306,43 @@ def render_visualizations(df: pd.DataFrame, parameters: dict[str, str]) -> None:
 def render_map(df: pd.DataFrame, parameters: dict[str, str], dark_map: bool) -> None:
     st.header("Survey Map")
     st.markdown(
-        "Each dot is a reading at the vehicle's GPS position. Choose a parameter to colour the route and "
-        "spot where in the bay conditions change. The markers labelled **Start** and **End** show where the "
-        "selected data begins and ends. You can change the map background in the sidebar."
+        "See where along the vehicle's route each reading was taken. Choose a parameter to show on both "
+        "maps below and spot where in the bay conditions change. The labels **Start** and **End** show "
+        "where the selected data begins and ends. You can change the map background in the sidebar."
     )
     names = list(parameters)
-    param = st.selectbox("Colour the track by", names, index=names.index("Water Depth (m)"), key="map_param")
+    param = st.selectbox("Parameter to show on the maps", names, index=names.index("Water Depth (m)"), key="map_param")
     note(parameters[param])
+    table = df[["Timestamp", "Latitude", "Longitude", "Waypoint", param]]
+
+    st.subheader("2D street map")
+    st.markdown("Each dot is one reading at the vehicle's GPS position, coloured by the selected parameter.")
     show_chart(
         charts.track_map(df, param, dark=dark_map),
-        df[["Timestamp", "Latitude", "Longitude", "Waypoint", param]],
+        table,
         f"The vehicle travelled about {track_distance_m(df):,.0f} m. Along the route, {param} ranged "
         f"{describe_range(df[param])}.",
     )
+
+    st.subheader("3D map")
+    st.markdown(
+        "The same readings as columns standing on a tilted map: **taller, brighter columns mean higher "
+        f"{param}**. Drag to move the map, hold **Shift** (or right-click) and drag to rotate and tilt it, "
+        "scroll to zoom, and hover over a column for its exact value. With a keyboard, click the map and "
+        "use the **arrow keys** to move, **Shift + arrow keys** to rotate and tilt, and **+ / −** to zoom."
+    )
+    st.html(map3d.legend_html(df, param, dark=dark_map))
+    high, low = df.loc[df[param].idxmax()], df.loc[df[param].idxmin()]
+    summary_3d = (
+        f"The tallest column ({param} {high[param]:,.2f}) was recorded at {high['Timestamp']:%H:%M:%S} "
+        f"and the shortest ({low[param]:,.2f}) at {low['Timestamp']:%H:%M:%S}."
+    )
+    st.pydeck_chart(
+        map3d.track_3d_map(df, param, dark=dark_map),
+        height=560,
+        alt=f"3D map of the survey route with one column per reading. {summary_3d}",
+    )
+    summary_and_table(table, summary_3d)
 
 
 def render_insights(df: pd.DataFrame, parameters: dict[str, str]) -> None:

@@ -77,6 +77,13 @@ FIT_LINE_COLOR = "#7A6BE0"  # trend line (also dashed, so it is not colour-only)
 START_COLOR = "#008300"
 END_COLOR = "#D63C3B"
 
+# Map colour scales: the Viridis steps that keep at least 3:1 contrast on a
+# light basemap (dark purple -> teal) and on a dark one (blue -> yellow).
+_VIRIDIS = ["#440154", "#482878", "#3E4989", "#31688E", "#26828E",
+            "#1F9E89", "#35B779", "#6ECE58", "#B5DE2B", "#FDE725"]
+MAP_SCALE_LIGHT = _VIRIDIS[:6]
+MAP_SCALE_DARK = _VIRIDIS[3:]
+
 # Selected-option tags in multiselects. Streamlit draws them in the theme's
 # primary colour with white text, which is too light in the dark theme, so the
 # app gives them this darker blue (white text reaches 6.4:1) in both themes.

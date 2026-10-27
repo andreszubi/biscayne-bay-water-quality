@@ -22,6 +22,8 @@ from src.config import (
     DIVERGING_SCALE,
     END_COLOR,
     FIT_LINE_COLOR,
+    MAP_SCALE_DARK,
+    MAP_SCALE_LIGHT,
     START_COLOR,
 )
 from src.colors import readable_text_on
@@ -202,17 +204,15 @@ def correlation_heatmap(df: pd.DataFrame, parameters: list[str]) -> go.Figure:
 def track_map(df: pd.DataFrame, parameter: str, dark: bool = False) -> go.Figure:
     """Vehicle GPS track on a street map, coloured by the chosen parameter.
 
-    `dark` picks a dark basemap and trims the colour scale so that no marker
-    colour blends into the map behind it.
+    `dark` picks a dark basemap and a colour scale whose every step keeps
+    3:1 contrast against it.
     """
-    viridis = px.colors.sequential.Viridis
     fig = px.scatter_map(
         df,
         lat="Latitude",
         lon="Longitude",
         color=parameter,
-        # Drop the darkest colours on a dark map and the yellow end on a light one.
-        color_continuous_scale=viridis[3:] if dark else viridis[:8],
+        color_continuous_scale=MAP_SCALE_DARK if dark else MAP_SCALE_LIGHT,
         hover_data={"Timestamp": "|%H:%M:%S", "Waypoint": True, "Water Depth (m)": ":.2f"},
         center={"lat": df["Latitude"].mean(), "lon": df["Longitude"].mean()},
         zoom=17.5,

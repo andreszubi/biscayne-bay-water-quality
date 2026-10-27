@@ -66,11 +66,12 @@ Priority uses **MoSCoW** (Must / Should / Could / Won't this release). Estimates
 | US-20 | As a user with low vision, I want all text and chart colours to have enough contrast in both themes, so I can read everything. | Must | 5 | 4 | ✅ Done |
 | US-21 | As a colour-blind user, I want chart categories marked by shape, pattern or label as well as colour, so I can tell them apart. | Must | 3 | 4 | ✅ Done |
 | US-22 | As a screen-reader user, I want a text summary and a data table for every chart, so I get the same information without seeing it. | Must | 3 | 4 | ✅ Done |
+| US-23 | As a researcher, I want a 3D map of the survey, so I can see how a parameter such as water depth changes along the route at a glance. | Should | 5 | 5 | ✅ Done |
 | US-16 | As a user, I want to upload my own water quality CSV and explore it the same way. | Could | 5 | – | 📋 Backlog (Project 2) |
 | US-17 | As a user, I want to ask questions about the data in natural language (AI assistant). | Won't (this release) | 8 | – | 📋 Backlog (Project 2) |
 | US-18 | As a researcher, I want to compare multiple survey days side by side. | Won't (this release) | 5 | – | 📋 Backlog |
 
-**Total delivered:** 57 story points across 4 sprints.
+**Total delivered:** 62 story points across 5 sprints.
 
 ## Sprint 1 – Data foundation
 
@@ -172,19 +173,41 @@ readable and usable for everyone.
 - *Action item:* Run the browser contrast scan in both themes as part of the Definition of Done for
   any UI change.
 
+## Sprint 5 – 3D map
+
+**Sprint goal:** Add a 3D view of the survey to the Map tab that is as readable and accessible as
+the rest of the app.
+
+| Story | Tasks |
+|---|---|
+| US-23 | `src/map3d.py`: pydeck ColumnLayer on a tilted Carto basemap, column height and colour both encode the chosen parameter, Start/End text labels, hover tooltip, text legend; alt text, summary and data table; keyboard instructions; colour scales limited to the Viridis steps that keep 3:1 contrast on each basemap (also applied to the 2D map); `tests/test_map3d.py` |
+
+**Review:** 3D map delivered and checked in both themes; the browser contrast scan found no text
+below 4.5:1 on any tab; 60 tests passing. Velocity: 5 points.
+
+**Retrospective**
+- *What went well:* Reusing the theme-aware map background and the summary/table helper made the
+  3D map accessible from the start.
+- *What didn't:* The first version's columns were too tall and wide: readings are only ~0.5 m
+  apart, so they merged into one wall. Thinner, shorter columns form a readable "curtain" instead.
+  The map credit text in the 3D map was also unreadable in the dark theme and needed a CSS fix.
+- *Discovery:* The light 2D map's colour scale included two green steps below 3:1 contrast; both
+  maps now use only the passing steps.
+- *Action item:* Try new visualizations at the real data density early, before tuning the styling.
+
 ## Burndown summary
 
-| | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 |
-|---|---|---|---|---|
-| Points committed | 10 | 14 | 19 | 14 |
-| Points completed | 10 | 14 | 19 | 14 |
-| Points remaining in release | 47 | 33 | 14 | 0 |
+| | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 | Sprint 5 |
+|---|---|---|---|---|---|
+| Points committed | 10 | 14 | 19 | 14 | 5 |
+| Points completed | 10 | 14 | 19 | 14 | 5 |
+| Points remaining in release | 52 | 38 | 19 | 5 | 0 |
 
 ## Kanban board (end of release)
 
 | 📋 Backlog | 🔄 In progress | ✅ Done |
 |---|---|---|
-| US-16 Upload own CSV | – | US-01 … US-15, US-19 … US-22 |
+| US-16 Upload own CSV | – | US-01 … US-15, US-19 … US-23 |
 | US-17 AI assistant | | |
 | US-18 Multi-day comparison | | |
 

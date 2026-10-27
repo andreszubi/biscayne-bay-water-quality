@@ -20,6 +20,8 @@ from src.config import (
     END_COLOR,
     FIT_LINE_COLOR,
     LIGHT_BACKGROUND,
+    MAP_SCALE_DARK,
+    MAP_SCALE_LIGHT,
     ROOT_DIR,
     START_COLOR,
     TAG_BACKGROUND,
@@ -87,6 +89,14 @@ def test_widget_borders_and_link_underlines_are_on(theme):
 @pytest.mark.parametrize("color", CHART_MARK_COLORS)
 def test_chart_marks_stand_out_in_both_themes(color, background):
     assert contrast_ratio(color, background) >= NON_TEXT_CONTRAST
+
+
+@pytest.mark.parametrize(
+    ("scale", "background"), [(MAP_SCALE_LIGHT, LIGHT_BACKGROUND), (MAP_SCALE_DARK, DARK_BACKGROUND)]
+)
+def test_map_colour_scales_stand_out_on_their_basemap(scale, background):
+    for color in scale:
+        assert contrast_ratio(color, background) >= NON_TEXT_CONTRAST
 
 
 def test_depth_zones_are_not_identified_by_colour_alone():

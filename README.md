@@ -57,7 +57,7 @@ which the charts use as their legend.
 | **📋 Overview** | Project summary, key metrics, how-to-use guide and a glossary of parameters |
 | **🗂️ Data** | Pick columns, browse the filtered table, see summary statistics, download a CSV |
 | **📈 Visualizations** | Time series with adjustable rolling average, scatter plot with trend line and correlation, histogram + box plot by depth zone |
-| **🗺️ Map** | Vehicle track on a street map, coloured by any parameter, with start/end markers |
+| **🗺️ Map** | A **2D street map** of the vehicle's track coloured by any parameter, and a **3D map**: a tilted street map where each reading stands as a column whose height and colour show the chosen parameter (drag, rotate, tilt and zoom with the mouse or keyboard) |
 | **💡 Insights** | Auto-generated findings, correlation heatmap and depth-zone comparison chart |
 
 **Interactive widgets:** time-window slider, waypoint range slider, depth-zone multiselect,
@@ -82,9 +82,9 @@ The app is designed to meet **WCAG 2.1 level AA**:
 | **1.4.11 Non-text contrast (3:1)** | Every chart colour (lines, points, bars, markers) reaches 3:1 against **both** the light and the dark background. Widget borders are turned on. |
 | **1.4.1 Use of colour** | Nothing is shown by colour alone: depth zones use colour **and** marker shape (scatter) or fill pattern (histogram), the trend line is dashed, map markers carry "Start"/"End" text, links are underlined, and correlation values are printed in each heatmap cell. |
 | **Colour-blind safety** | The three depth-zone colours were checked with a colour-vision-deficiency simulator: they stay clearly distinct for red-green colour blindness (the most common types). For the rarer blue-yellow type they are closer, which is one reason every chart also uses shapes, patterns or labels. The map uses the colour-blind-safe Viridis scale. |
-| **1.1.1 Non-text content** | Every chart is followed by a written **Chart summary** and a **View the data behind this chart** table, so screen-reader users get the same information. |
+| **1.1.1 Non-text content** | Every chart and map is followed by a written **Chart summary** and a **View the data behind this chart** table, so screen-reader users get the same information. The 3D map also has a text description (alt text) and a text legend. |
 | **1.3.1 Info and relationships / 2.4.6 Headings** | Headings follow a proper order (page title → section → subsection) with no skipped levels. |
-| **2.1.1 Keyboard** | All controls are standard Streamlit widgets that work with the keyboard. |
+| **2.1.1 Keyboard** | All controls are standard Streamlit widgets that work with the keyboard. The 3D map can be moved with the arrow keys, rotated and tilted with Shift + arrow keys, and zoomed with + / −. |
 
 These rules are enforced by `tests/test_accessibility.py`, which computes the WCAG contrast ratio
 of every theme colour pair and chart colour, so a future colour change cannot quietly break them.
@@ -141,6 +141,7 @@ without errors.
 │   ├── config.py           # Paths, column names, parameter descriptions, thresholds
 │   ├── data_loader.py      # Load, clean and filter the CSV; distance/duration helpers
 │   ├── charts.py           # Plotly figure builders (one function per chart)
+│   ├── map3d.py            # pydeck (deck.gl) 3D map and its legend
 │   ├── colors.py           # WCAG contrast-ratio helpers
 │   └── insights.py         # Plain-language findings generated from the data
 ├── tests/                  # pytest unit tests and headless app tests
@@ -164,4 +165,4 @@ Commits are labelled by sprint, and continuous integration runs the test suite o
 
 ## Tech stack
 
-Python · Streamlit · Plotly · pandas · NumPy · pytest · GitHub Actions · Streamlit Community Cloud
+Python · Streamlit · Plotly · pydeck (deck.gl) · pandas · NumPy · pytest · GitHub Actions · Streamlit Community Cloud
